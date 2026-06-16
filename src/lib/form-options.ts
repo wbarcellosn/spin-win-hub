@@ -14,7 +14,7 @@ export const DEFAULT_INTEREST_GROUPS: InterestGroup[] = [
   },
   {
     group: "Academia Findes de Negócios",
-    items: ["Cursos e eventos da Academia Findes de Negócios", "Fórum IEL de Gestão 2026"],
+    items: ["Cursos e eventos da Academia Findes de Negócios", "Fórum IEL de Gestão 2026", "Programa Executivo Global - Xangai, China", "Curso de Formação de Conselheiros - IBGC"],
   },
 ];
 
