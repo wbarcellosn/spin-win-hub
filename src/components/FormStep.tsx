@@ -138,9 +138,9 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
         <header className="mb-5 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <img src={logoUrl} alt="Findes IEL" className="mb-4 h-12 sm:mb-5 sm:h-14" />
-            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Cadastro para a Roleta</h1>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{settings.title}</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Preencha seus dados com atenção. O CPF será usado para validar uma única participação.
+              {settings.subtitle}
             </p>
           </div>
           {onBack && (
