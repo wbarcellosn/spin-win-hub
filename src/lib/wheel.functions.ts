@@ -44,7 +44,7 @@ const submitSchema = z.object({
   telefone: z.string().trim().min(1).max(40),
   email: z.string().trim().email().max(255),
   cpf: z.string().trim().refine(isValidCpf, "CPF inválido"),
-  sexo: z.enum(["Masculino", "Feminino", "Prefiro não informar"]),
+  sexo: z.string().trim().min(1).max(80),
   empregado: z.boolean(),
   empresa: z.string().trim().max(200).optional().nullable(),
   interesses: z.array(z.string().min(1).max(200)).min(1).max(20),
