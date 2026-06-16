@@ -74,6 +74,33 @@ export type Database = {
         }
         Relationships: []
       }
+      form_interest_options: {
+        Row: {
+          created_at: string
+          group_label: string
+          id: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_label: string
+          id?: string
+          label: string
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_label?: string
+          id?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

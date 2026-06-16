@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { DEFAULT_INTEREST_GROUPS } from "@/lib/form-options";
 import { z } from "zod";
 
 async function assertAdmin(userId: string) {
@@ -89,6 +90,71 @@ export const adminSaveWheelPrizes = createServerFn({ method: "POST" })
     const { error: insertError } = await supabaseAdmin
       .from("wheel_prizes")
       .insert(normalized.map((label, position) => ({ label, position })));
+    if (insertError) throw new Error(insertError.message);
+
+    return { ok: true };
+  });
+
+export const adminListInterestOptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("form_interest_options")
+      .select("id, group_label, label, position")
+      .order("position", { ascending: true });
+    if (error) return DEFAULT_INTEREST_GROUPS;
+    if (!data || data.length === 0) return DEFAULT_INTEREST_GROUPS;
+
+    const groups: Array<{ group: string; items: string[] }> = [];
+    for (const option of data) {
+      let group = groups.find((item) => item.group === option.group_label);
+      if (!group) {
+        group = { group: option.group_label, items: [] };
+        groups.push(group);
+      }
+      group.items.push(option.label);
+    }
+    return groups;
+  });
+
+export const adminSaveInterestOptions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      groups: z.array(z.object({
+        group: z.string().trim().min(1).max(80),
+        items: z.array(z.string().trim().min(1).max(200)).min(1).max(30),
+      })).min(1).max(12),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const rows = data.groups.flatMap((group, groupIndex) =>
+      group.items.map((label, itemIndex) => ({
+        group_label: group.group.trim(),
+        label: label.trim(),
+        position: groupIndex * 100 + itemIndex,
+      })),
+    );
+
+    const normalizedLabels = rows.map((row) => row.label.toLocaleLowerCase("pt-BR"));
+    if (new Set(normalizedLabels).size !== normalizedLabels.length) {
+      throw new Error("Nao use opcoes de interesse com o mesmo nome.");
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+      .from("form_interest_options")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (deleteError) throw new Error(deleteError.message);
+
+    const { error: insertError } = await supabaseAdmin
+      .from("form_interest_options")
+      .insert(rows);
     if (insertError) throw new Error(insertError.message);
 
     return { ok: true };

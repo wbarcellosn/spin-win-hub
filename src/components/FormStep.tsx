@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { BriefcaseBusiness, CheckCircle2, IdCard, Mail, Phone, ShieldCheck, User } from "lucide-react";
 import { z } from "zod";
 import logoUrl from "@/assets/logo.png";
-import { submitForm } from "@/lib/wheel.functions";
+import { getInterestOptions, submitForm } from "@/lib/wheel.functions";
+import { DEFAULT_INTEREST_GROUPS, type InterestGroup } from "@/lib/form-options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,8 +78,10 @@ function maskPhone(value: string) {
 
 export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: string) => void; onBack?: () => void }) {
   const submit = useServerFn(submitForm);
+  const loadInterests = useServerFn(getInterestOptions);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [interestGroups, setInterestGroups] = useState<InterestGroup[]>(DEFAULT_INTEREST_GROUPS);
   const [form, setForm] = useState({
     nome: "",
     telefone: "",
@@ -90,6 +93,16 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
     interesses: [] as string[],
     termo_aceite: false,
   });
+
+  useEffect(() => {
+    loadInterests()
+      .then((groups) => {
+        if (Array.isArray(groups) && groups.length > 0) {
+          setInterestGroups(groups as InterestGroup[]);
+        }
+      })
+      .catch(() => setInterestGroups(DEFAULT_INTEREST_GROUPS));
+  }, [loadInterests]);
 
   function toggleInterest(item: string) {
     setForm((f) => ({
@@ -218,7 +231,7 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                 <div className="grid gap-3">
                   <Label>Gostaria de receber informações sobre *</Label>
                   <div className="grid gap-3 md:grid-cols-2">
-                    {INTERESSES_GROUPS.map((g) => (
+                    {interestGroups.map((g) => (
                       <fieldset key={g.group} className="rounded-lg border border-border bg-muted/20 p-4">
                         <legend className="px-1 text-sm font-bold">{g.group}</legend>
                         <div className="mt-3 grid gap-3">

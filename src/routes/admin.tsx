@@ -9,13 +9,16 @@ import { Label } from "@/components/ui/label";
 import {
   adminExists,
   adminIsAdmin,
+  adminListInterestOptions,
   adminListEntries,
   adminListWheelPrizes,
   adminMarkVrUsed,
   adminResetSpin,
+  adminSaveInterestOptions,
   adminSaveWheelPrizes,
   bootstrapAdmin,
 } from "@/lib/admin.functions";
+import { DEFAULT_INTEREST_GROUPS, type InterestGroup } from "@/lib/form-options";
 import { isVrPrize } from "@/lib/prizes";
 import logoUrl from "@/assets/logo.png";
 
@@ -174,14 +177,18 @@ function NotAuthorized() {
 function Dashboard() {
   const listFn = useServerFn(adminListEntries);
   const listWheelFn = useServerFn(adminListWheelPrizes);
+  const listInterestFn = useServerFn(adminListInterestOptions);
   const markFn = useServerFn(adminMarkVrUsed);
   const resetFn = useServerFn(adminResetSpin);
   const saveWheelFn = useServerFn(adminSaveWheelPrizes);
+  const saveInterestFn = useServerFn(adminSaveInterestOptions);
   const [rows, setRows] = useState<EntryRow[]>([]);
-  const [tab, setTab] = useState<"all" | "vr" | "wheel">("all");
+  const [tab, setTab] = useState<"all" | "vr" | "wheel" | "form">("all");
   const [query, setQuery] = useState("");
   const [wheelLabels, setWheelLabels] = useState<string[]>([]);
   const [wheelMessage, setWheelMessage] = useState<string | null>(null);
+  const [interestGroups, setInterestGroups] = useState<InterestGroup[]>(DEFAULT_INTEREST_GROUPS);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -196,12 +203,22 @@ function Dashboard() {
     setWheelLabels((data as Array<{ label: string }>).map((item) => item.label));
   }
 
+  async function refreshInterestOptions() {
+    const data = await listInterestFn();
+    setInterestGroups(data as InterestGroup[]);
+  }
+
   useEffect(() => {
     void refresh();
     void refreshWheel();
+    void refreshInterestOptions();
   }, []); // eslint-disable-line
 
   const vrRows = rows.filter((r) => isVrPrize(r.premio));
+  const interestLabels = useMemo(
+    () => interestGroups.flatMap((group) => group.items).filter(Boolean),
+    [interestGroups],
+  );
   const activeRows = tab === "vr" ? vrRows : rows;
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -241,6 +258,34 @@ function Dashboard() {
     URL.revokeObjectURL(url);
   }
 
+  function downloadReportCsv() {
+    const headers = [
+      "Senha", "Nome", "CPF", "Telefone", "Email", "Sexo", "Empregado", "Empresa",
+      ...interestLabels,
+      "Termo Aceite", "Preenchido em", "Premio", "Girou", "Girou em", "VR Utilizado", "Criado em",
+    ];
+    const lines = [headers.join(";")];
+    for (const r of rows) {
+      const selectedInterests = new Set(Array.isArray(r.interesses) ? r.interesses : []);
+      const row = [
+        r.senha, r.nome, formatCpf(r.cpf), r.telefone, r.email, r.sexo,
+        r.empregado ? "Sim" : "Nao", r.empresa ?? "",
+        ...interestLabels.map((label) => selectedInterests.has(label) ? "SIM" : "NAO"),
+        r.termo_aceite ? "Sim" : "Nao",
+        r.filled_at, r.premio ?? "", r.spun ? "Sim" : "Nao",
+        r.spun_at ?? "", r.vr_used ? "Sim" : "Nao", r.created_at,
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`);
+      lines.push(row.join(";"));
+    }
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `respostas-roleta-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="min-h-screen px-3 py-5 sm:px-4 sm:py-8 max-w-7xl mx-auto">
       <header className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
@@ -250,7 +295,7 @@ function Dashboard() {
         </div>
         <div className="grid grid-cols-3 gap-2 sm:flex">
           <Button variant="outline" onClick={() => void refresh()}>Atualizar</Button>
-          <Button onClick={downloadCsv} className="btn-spin">Baixar CSV</Button>
+          <Button onClick={downloadReportCsv} className="btn-spin">Baixar CSV</Button>
           <Button variant="ghost" onClick={() => supabase.auth.signOut()}>Sair</Button>
         </div>
       </header>
@@ -275,9 +320,15 @@ function Dashboard() {
           >
             Pás da roleta
           </button>
+          <button
+            className={`shrink-0 px-4 py-2 rounded-md text-sm font-medium ${tab === "form" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+            onClick={() => setTab("form")}
+          >
+            Formulario
+          </button>
         </div>
 
-        {tab !== "wheel" && (
+        {(tab === "all" || tab === "vr") && (
           <div className="relative lg:ml-auto lg:w-[360px]">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -358,6 +409,133 @@ function Dashboard() {
           </div>
 
           {wheelMessage && <p className="mt-4 text-sm text-muted-foreground">{wheelMessage}</p>}
+        </section>
+      ) : tab === "form" ? (
+        <section className="rounded-lg border border-border bg-card p-4 shadow-xl sm:p-6">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold">Formulario</h2>
+              <p className="text-sm text-muted-foreground">
+                Edite os grupos e opcoes de interesse exibidos no cadastro. O CSV usa automaticamente esta lista.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setInterestGroups((groups) => [...groups, { group: "Novo grupo", items: ["Nova opcao"] }])}
+              >
+                <Plus className="size-4" />
+                Grupo
+              </Button>
+              <Button
+                type="button"
+                className="btn-spin"
+                onClick={async () => {
+                  setFormMessage(null);
+                  const groups = interestGroups
+                    .map((group) => ({
+                      group: group.group.trim(),
+                      items: group.items.map((item) => item.trim()).filter(Boolean),
+                    }))
+                    .filter((group) => group.group && group.items.length > 0);
+                  if (groups.length === 0) {
+                    setFormMessage("Cadastre pelo menos um grupo com uma opcao.");
+                    return;
+                  }
+                  await saveInterestFn({ data: { groups } });
+                  await refreshInterestOptions();
+                  setFormMessage("Formulario salvo.");
+                }}
+              >
+                <Save className="size-4" />
+                Salvar
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-5">
+            {interestGroups.map((group, groupIndex) => (
+              <div key={`${groupIndex}-${group.group}`} className="rounded-lg border border-border bg-muted/15 p-4">
+                <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <Input
+                    value={group.group}
+                    maxLength={80}
+                    onChange={(e) => {
+                      const next = [...interestGroups];
+                      next[groupIndex] = { ...next[groupIndex], group: e.target.value };
+                      setInterestGroups(next);
+                    }}
+                    className="h-11 rounded-lg bg-background/45 font-semibold"
+                    aria-label="Nome do grupo"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={interestGroups.length <= 1}
+                    onClick={() => setInterestGroups((groups) => groups.filter((_, index) => index !== groupIndex))}
+                    aria-label="Remover grupo"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+
+                <div className="grid gap-2">
+                  {group.items.map((item, itemIndex) => (
+                    <div key={`${groupIndex}-${itemIndex}`} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                      <Input
+                        value={item}
+                        maxLength={200}
+                        onChange={(e) => {
+                          const next = [...interestGroups];
+                          const items = [...next[groupIndex].items];
+                          items[itemIndex] = e.target.value;
+                          next[groupIndex] = { ...next[groupIndex], items };
+                          setInterestGroups(next);
+                        }}
+                        className="h-11 rounded-lg bg-background/45"
+                        aria-label="Opcao de interesse"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        disabled={group.items.length <= 1}
+                        onClick={() => {
+                          const next = [...interestGroups];
+                          next[groupIndex] = {
+                            ...next[groupIndex],
+                            items: next[groupIndex].items.filter((_, index) => index !== itemIndex),
+                          };
+                          setInterestGroups(next);
+                        }}
+                        aria-label="Remover opcao"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3"
+                  onClick={() => {
+                    const next = [...interestGroups];
+                    next[groupIndex] = { ...next[groupIndex], items: [...next[groupIndex].items, "Nova opcao"] };
+                    setInterestGroups(next);
+                  }}
+                >
+                  <Plus className="size-4" />
+                  Adicionar opcao
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {formMessage && <p className="mt-4 text-sm text-muted-foreground">{formMessage}</p>}
         </section>
       ) : loading ? (
         <p className="text-muted-foreground">Carregando...</p>
