@@ -241,7 +241,7 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                 <h2 className="text-base font-bold sm:text-lg">Termo de participação</h2>
               </div>
               <div className="max-h-44 overflow-auto rounded-lg border border-border bg-background/40 p-3 text-sm leading-relaxed text-muted-foreground whitespace-pre-line sm:p-4">
-                {TERM}
+                {settings.term}
               </div>
               <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm">
                 <Checkbox checked={form.termo_aceite} onCheckedChange={(c) => setForm({ ...form, termo_aceite: !!c })} />
