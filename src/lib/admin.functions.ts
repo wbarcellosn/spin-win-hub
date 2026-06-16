@@ -213,3 +213,46 @@ export const bootstrapAdmin = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const formSettingsSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  subtitle: z.string().trim().max(500),
+  term: z.string().trim().min(1).max(5000),
+  submitLabel: z.string().trim().min(1).max(80),
+  sexoOptions: z.array(z.string().trim().min(1).max(80)).min(1).max(10),
+  empregadoSimLabel: z.string().trim().min(1).max(40),
+  empregadoNaoLabel: z.string().trim().min(1).max(40),
+}) satisfies z.ZodType<FormSettings>;
+
+export const adminGetFormSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.from("form_settings").select("key, value");
+    if (error || !data) return DEFAULT_FORM_SETTINGS;
+    const map = new Map(data.map((r) => [r.key, r.value]));
+    const merged: FormSettings = { ...DEFAULT_FORM_SETTINGS };
+    for (const k of Object.keys(merged) as Array<keyof FormSettings>) {
+      const v = map.get(k);
+      if (v !== undefined && v !== null) (merged as Record<string, unknown>)[k] = v;
+    }
+    return merged;
+  });
+
+export const adminSaveFormSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => formSettingsSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rows = (Object.entries(data) as Array<[string, unknown]>).map(([key, value]) => ({
+      key,
+      value: value as never,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabaseAdmin.from("form_settings").upsert(rows, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
