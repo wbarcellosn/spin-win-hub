@@ -114,6 +114,7 @@ function Index() {
     <ResultStep
       prize={entry.premio ?? ""}
       senha={entry.senha}
+      vrUsed={!!entry.vr_used}
       date={entry.spun_at ?? undefined}
       onBackHome={handleBackHome}
     />

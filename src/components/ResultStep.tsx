@@ -6,11 +6,12 @@ import { isVrPrize } from "@/lib/prizes";
 type Props = {
   prize: string;
   senha?: string;
+  vrUsed?: boolean;
   date?: string;
   onBackHome?: () => void;
 };
 
-export default function ResultStep({ prize, senha, date, onBackHome }: Props) {
+export default function ResultStep({ prize, senha, vrUsed = false, date, onBackHome }: Props) {
   const isVR = isVrPrize(prize);
   const isWin = prize !== "NÃO FOI DESSA VEZ";
   const formatted = date ? new Date(date).toLocaleString("pt-BR") : new Date().toLocaleString("pt-BR");
@@ -36,6 +37,9 @@ export default function ResultStep({ prize, senha, date, onBackHome }: Props) {
               Sua senha para retirar a experiência VR
             </p>
             <p className="text-5xl font-black tracking-[0.3em] text-accent">{senha}</p>
+            <p className={`mt-3 text-sm font-bold ${vrUsed ? "text-muted-foreground" : "text-accent"}`}>
+              Status: {vrUsed ? "Utilizada" : "Não utilizada"}
+            </p>
             <p className="mt-3 text-xs text-muted-foreground">
               Apresente esta senha no balcão do evento.
             </p>
