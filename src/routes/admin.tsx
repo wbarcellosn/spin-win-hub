@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SEGMENT_COLORS } from "@/components/Wheel";
 import {
   adminExists,
   adminGetFormSettings,
@@ -393,18 +394,35 @@ function Dashboard() {
 
           <div className="grid gap-3">
             {wheelLabels.map((label, index) => (
-              <div key={`${index}-${label}`} className="grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-                <span className="text-sm font-mono text-muted-foreground">#{index + 1}</span>
-                <Input
-                  value={label}
-                  maxLength={80}
-                  onChange={(e) => {
-                    const next = [...wheelLabels];
-                    next[index] = e.target.value;
-                    setWheelLabels(next);
-                  }}
-                  className="h-11 rounded-lg bg-background/45"
-                />
+              <div key={`${index}-${label}`} className="grid gap-3 rounded-lg border border-border bg-muted/15 p-3 sm:grid-cols-[190px_1fr_auto] sm:items-center">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="h-11 w-11 shrink-0 rounded-full border border-white/20 shadow-inner"
+                    style={{ background: SEGMENT_COLORS[index % SEGMENT_COLORS.length] }}
+                    aria-hidden
+                  />
+                  <div>
+                    <p className="text-sm font-black">Pa #{index + 1}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {Math.round(index * (360 / wheelLabels.length))} deg - {Math.round((index + 1) * (360 / wheelLabels.length))} deg
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Input
+                    value={label}
+                    maxLength={80}
+                    onChange={(e) => {
+                      const next = [...wheelLabels];
+                      next[index] = e.target.value;
+                      setWheelLabels(next);
+                    }}
+                    className="h-11 rounded-lg bg-background/45"
+                  />
+                  <p className="truncate text-xs text-muted-foreground">
+                    Previa: {label || "Pa sem texto"}
+                  </p>
+                </div>
                 <Button
                   type="button"
                   variant="outline"

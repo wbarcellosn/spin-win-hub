@@ -8,7 +8,7 @@ export type WheelProps = {
   onSpinComplete?: () => void;
 };
 
-const SEGMENT_COLORS = [
+export const SEGMENT_COLORS = [
   "var(--wheel-dark)",
   "var(--wheel-blue)",
   "var(--wheel-navy)",
