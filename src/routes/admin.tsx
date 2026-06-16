@@ -8,17 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   adminExists,
+  adminGetFormSettings,
   adminIsAdmin,
   adminListInterestOptions,
   adminListEntries,
   adminListWheelPrizes,
   adminMarkVrUsed,
   adminResetSpin,
+  adminSaveFormSettings,
   adminSaveInterestOptions,
   adminSaveWheelPrizes,
   bootstrapAdmin,
 } from "@/lib/admin.functions";
-import { DEFAULT_INTEREST_GROUPS, type InterestGroup } from "@/lib/form-options";
+import { DEFAULT_FORM_SETTINGS, DEFAULT_INTEREST_GROUPS, type FormSettings, type InterestGroup } from "@/lib/form-options";
 import { isVrPrize } from "@/lib/prizes";
 import logoUrl from "@/assets/logo.png";
 
