@@ -471,14 +471,22 @@ function Dashboard() {
                     empregadoNaoLabel: formSettings.empregadoNaoLabel.trim(),
                   };
                   try {
-                    await saveSettingsFn({ data: settingsPayload });
                     await saveInterestFn({ data: { groups } });
                     await refreshInterestOptions();
+                    await saveSettingsFn({ data: settingsPayload });
                     await refreshFormSettings();
                     setFormMessage({ text: "Formulário salvo com sucesso.", kind: "ok" });
                   } catch (err) {
+                    const message = (err as Error).message ?? "";
+                    if (message.includes("form_settings") || message.includes("schema cache")) {
+                      setFormMessage({
+                        text: "Opcoes de interesse salvas. Para salvar textos gerais do formulario, execute a migration da tabela form_settings no Supabase.",
+                        kind: "ok",
+                      });
+                      return;
+                    }
                     setFormMessage({
-                      text: `Erro ao salvar: ${(err as Error).message ?? "tente novamente"}`,
+                      text: `Erro ao salvar: ${message || "tente novamente"}`,
                       kind: "error",
                     });
                   }
