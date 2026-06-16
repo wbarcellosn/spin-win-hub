@@ -257,7 +257,7 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
 
             <Button type="submit" disabled={loading} className="h-12 rounded-lg btn-spin">
               <CheckCircle2 className="size-5" />
-              {loading ? "Enviando..." : "Continuar para a Roleta"}
+              {loading ? "Enviando..." : settings.submitLabel}
             </Button>
           </div>
         </form>
