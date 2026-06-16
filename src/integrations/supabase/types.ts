@@ -74,6 +74,51 @@ export type Database = {
         }
         Relationships: []
       }
+      form_interest_options: {
+        Row: {
+          created_at: string
+          group_label: string
+          id: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_label: string
+          id?: string
+          label: string
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_label?: string
+          id?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      form_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -89,6 +134,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      wheel_prizes: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          position?: number
+          updated_at?: string
         }
         Relationships: []
       }

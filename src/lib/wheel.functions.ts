@@ -1,6 +1,30 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { DEFAULT_INTEREST_GROUPS } from "@/lib/form-options";
+import { DEFAULT_FORM_SETTINGS, DEFAULT_INTEREST_GROUPS, type FormSettings } from "@/lib/form-options";
+
+export const getFormSettings = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("form_settings")
+    .select("key, value");
+  if (error || !data) return DEFAULT_FORM_SETTINGS;
+  const map = new Map(data.map((r) => [r.key, r.value]));
+  const get = <K extends keyof FormSettings>(k: K): FormSettings[K] => {
+    const v = map.get(k);
+    return (v === undefined || v === null ? DEFAULT_FORM_SETTINGS[k] : v) as FormSettings[K];
+  };
+  return {
+    title: String(get("title")),
+    subtitle: String(get("subtitle")),
+    term: String(get("term")),
+    submitLabel: String(get("submitLabel")),
+    sexoOptions: Array.isArray(get("sexoOptions"))
+      ? (get("sexoOptions") as string[]).map(String)
+      : DEFAULT_FORM_SETTINGS.sexoOptions,
+    empregadoSimLabel: String(get("empregadoSimLabel")),
+    empregadoNaoLabel: String(get("empregadoNaoLabel")),
+  } satisfies FormSettings;
+});
 
 const DEFAULT_PRIZES = [
   "NÃO FOI DESSA VEZ",
@@ -20,7 +44,7 @@ const submitSchema = z.object({
   telefone: z.string().trim().min(1).max(40),
   email: z.string().trim().email().max(255),
   cpf: z.string().trim().refine(isValidCpf, "CPF inválido"),
-  sexo: z.enum(["Masculino", "Feminino", "Prefiro não informar"]),
+  sexo: z.string().trim().min(1).max(80),
   empregado: z.boolean(),
   empresa: z.string().trim().max(200).optional().nullable(),
   interesses: z.array(z.string().min(1).max(200)).min(1).max(20),

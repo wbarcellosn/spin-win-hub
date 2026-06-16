@@ -3,39 +3,20 @@ import { useServerFn } from "@tanstack/react-start";
 import { BriefcaseBusiness, CheckCircle2, IdCard, Mail, Phone, ShieldCheck, User } from "lucide-react";
 import { z } from "zod";
 import logoUrl from "@/assets/logo.png";
-import { getInterestOptions, submitForm } from "@/lib/wheel.functions";
-import { DEFAULT_INTEREST_GROUPS, type InterestGroup } from "@/lib/form-options";
+import { getFormSettings, getInterestOptions, submitForm } from "@/lib/wheel.functions";
+import { DEFAULT_FORM_SETTINGS, DEFAULT_INTEREST_GROUPS, type FormSettings, type InterestGroup } from "@/lib/form-options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const TERM = `Declaro que concordo com a utilização dos dados pessoais por parte do IEL-ES para fins de avaliação de perfil profissional, participação em processos seletivos, divulgação de oportunidades profissionais, cursos, programas, eventos e demais iniciativas institucionais, bem como para a realização de pesquisas e levantamentos de interesse institucional.
-
-Os dados pessoais informados serão tratados com segurança, confidencialidade e em conformidade com a Lei Geral de Proteção de Dados Pessoais - LGPD (Lei nº 13.709/2018), observando-se os princípios da finalidade, adequação, necessidade e proteção dos direitos dos titulares dos dados.`;
-
-const INTERESSES_GROUPS: Array<{ group: string; items: string[] }> = [
-  {
-    group: "Estágios e carreira",
-    items: [
-      "Sou empresa, quero contratar estagiário e/ou CLT",
-      "Oportunidade de emprego/estágio",
-      "Gestão de estágio",
-    ],
-  },
-  {
-    group: "Academia Findes de Negócios",
-    items: ["Cursos e eventos da Academia Findes de Negócios", "Fórum IEL de Gestão 2026"],
-  },
-];
-
 const schema = z.object({
   nome: z.string().trim().min(1, "Informe seu nome").max(200),
   telefone: z.string().trim().min(8, "Telefone inválido").max(40),
   email: z.string().trim().email("E-mail inválido").max(255),
   cpf: z.string().trim().refine(isValidCpf, "CPF inválido"),
-  sexo: z.enum(["Masculino", "Feminino", "Prefiro não informar"]),
+  sexo: z.string().trim().min(1, "Selecione uma opção"),
   empregado: z.boolean(),
   empresa: z.string().trim().max(200).optional(),
   interesses: z.array(z.string()).min(1, "Selecione ao menos um interesse"),
@@ -79,15 +60,17 @@ function maskPhone(value: string) {
 export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: string) => void; onBack?: () => void }) {
   const submit = useServerFn(submitForm);
   const loadInterests = useServerFn(getInterestOptions);
+  const loadSettings = useServerFn(getFormSettings);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [interestGroups, setInterestGroups] = useState<InterestGroup[]>(DEFAULT_INTEREST_GROUPS);
+  const [settings, setSettings] = useState<FormSettings>(DEFAULT_FORM_SETTINGS);
   const [form, setForm] = useState({
     nome: "",
     telefone: "",
     email: "",
     cpf: "",
-    sexo: "" as "" | "Masculino" | "Feminino" | "Prefiro não informar",
+    sexo: "" as string,
     empregado: null as null | boolean,
     empresa: "",
     interesses: [] as string[],
@@ -102,7 +85,10 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
         }
       })
       .catch(() => setInterestGroups(DEFAULT_INTEREST_GROUPS));
-  }, [loadInterests]);
+    loadSettings()
+      .then((s) => setSettings(s as FormSettings))
+      .catch(() => setSettings(DEFAULT_FORM_SETTINGS));
+  }, [loadInterests, loadSettings]);
 
   function toggleInterest(item: string) {
     setForm((f) => ({
@@ -152,9 +138,9 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
         <header className="mb-5 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <img src={logoUrl} alt="Findes IEL" className="mb-4 h-12 sm:mb-5 sm:h-14" />
-            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Cadastro para a Roleta</h1>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{settings.title}</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Preencha seus dados com atenção. O CPF será usado para validar uma única participação.
+              {settings.subtitle}
             </p>
           </div>
           {onBack && (
@@ -196,8 +182,8 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                 </div>
                 <div className="grid gap-2">
                   <Label>Sexo *</Label>
-                  <RadioGroup value={form.sexo} onValueChange={(v) => setForm({ ...form, sexo: v as typeof form.sexo })} className="grid gap-2 pt-1 sm:grid-cols-2">
-                    {["Masculino", "Feminino", "Prefiro não informar"].map((s) => (
+                  <RadioGroup value={form.sexo} onValueChange={(v) => setForm({ ...form, sexo: v })} className="grid gap-2 pt-1 sm:grid-cols-2">
+                    {settings.sexoOptions.map((s) => (
                       <label key={s} className="flex min-h-10 items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 text-sm">
                         <RadioGroupItem value={s} /> {s}
                       </label>
@@ -217,10 +203,10 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                   <Label>Está empregado(a) no momento? *</Label>
                   <RadioGroup value={form.empregado === null ? "" : form.empregado ? "sim" : "nao"} onValueChange={(v) => setForm({ ...form, empregado: v === "sim" })} className="grid grid-cols-2 gap-3 sm:max-w-xs">
                     <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 text-sm">
-                      <RadioGroupItem value="sim" /> Sim
+                      <RadioGroupItem value="sim" /> {settings.empregadoSimLabel}
                     </label>
                     <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 text-sm">
-                      <RadioGroupItem value="nao" /> Não
+                      <RadioGroupItem value="nao" /> {settings.empregadoNaoLabel}
                     </label>
                   </RadioGroup>
                   {form.empregado && (
@@ -255,7 +241,7 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                 <h2 className="text-base font-bold sm:text-lg">Termo de participação</h2>
               </div>
               <div className="max-h-44 overflow-auto rounded-lg border border-border bg-background/40 p-3 text-sm leading-relaxed text-muted-foreground whitespace-pre-line sm:p-4">
-                {TERM}
+                {settings.term}
               </div>
               <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm">
                 <Checkbox checked={form.termo_aceite} onCheckedChange={(c) => setForm({ ...form, termo_aceite: !!c })} />
@@ -271,7 +257,7 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
 
             <Button type="submit" disabled={loading} className="h-12 rounded-lg btn-spin">
               <CheckCircle2 className="size-5" />
-              {loading ? "Enviando..." : "Continuar para a Roleta"}
+              {loading ? "Enviando..." : settings.submitLabel}
             </Button>
           </div>
         </form>
