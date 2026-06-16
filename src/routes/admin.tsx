@@ -425,16 +425,16 @@ function Dashboard() {
         <section className="rounded-lg border border-border bg-card p-4 shadow-xl sm:p-6">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold">Formulario</h2>
+              <h2 className="text-lg font-bold">Formulário</h2>
               <p className="text-sm text-muted-foreground">
-                Edite os grupos e opcoes de interesse exibidos no cadastro. O CSV usa automaticamente esta lista.
+                Edite os textos, opções e grupos de interesse do cadastro. O CSV usa automaticamente esta lista.
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setInterestGroups((groups) => [...groups, { group: "Novo grupo", items: ["Nova opcao"] }])}
+                onClick={() => setInterestGroups((groups) => [...groups, { group: "Novo grupo", items: ["Nova opção"] }])}
               >
                 <Plus className="size-4" />
                 Grupo
@@ -451,12 +451,37 @@ function Dashboard() {
                     }))
                     .filter((group) => group.group && group.items.length > 0);
                   if (groups.length === 0) {
-                    setFormMessage("Cadastre pelo menos um grupo com uma opcao.");
+                    setFormMessage({ text: "Cadastre pelo menos um grupo com uma opção.", kind: "error" });
                     return;
                   }
-                  await saveInterestFn({ data: { groups } });
-                  await refreshInterestOptions();
-                  setFormMessage("Formulario salvo.");
+                  const sexoOptions = formSettings.sexoOptions
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  if (sexoOptions.length === 0) {
+                    setFormMessage({ text: "Informe pelo menos uma opção em Sexo.", kind: "error" });
+                    return;
+                  }
+                  const settingsPayload = {
+                    title: formSettings.title.trim(),
+                    subtitle: formSettings.subtitle.trim(),
+                    term: formSettings.term.trim(),
+                    submitLabel: formSettings.submitLabel.trim(),
+                    sexoOptions,
+                    empregadoSimLabel: formSettings.empregadoSimLabel.trim(),
+                    empregadoNaoLabel: formSettings.empregadoNaoLabel.trim(),
+                  };
+                  try {
+                    await saveSettingsFn({ data: settingsPayload });
+                    await saveInterestFn({ data: { groups } });
+                    await refreshInterestOptions();
+                    await refreshFormSettings();
+                    setFormMessage({ text: "Formulário salvo com sucesso.", kind: "ok" });
+                  } catch (err) {
+                    setFormMessage({
+                      text: `Erro ao salvar: ${(err as Error).message ?? "tente novamente"}`,
+                      kind: "error",
+                    });
+                  }
                 }}
               >
                 <Save className="size-4" />
@@ -465,6 +490,120 @@ function Dashboard() {
             </div>
           </div>
 
+          <div className="mb-6 grid gap-4 rounded-lg border border-border bg-muted/15 p-4">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Textos da página</h3>
+            <div className="grid gap-2">
+              <Label htmlFor="set-title">Título</Label>
+              <Input
+                id="set-title"
+                value={formSettings.title}
+                maxLength={200}
+                onChange={(e) => setFormSettings({ ...formSettings, title: e.target.value })}
+                className="h-11 rounded-lg bg-background/45"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="set-subtitle">Subtítulo</Label>
+              <Input
+                id="set-subtitle"
+                value={formSettings.subtitle}
+                maxLength={500}
+                onChange={(e) => setFormSettings({ ...formSettings, subtitle: e.target.value })}
+                className="h-11 rounded-lg bg-background/45"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="set-submit">Texto do botão de envio</Label>
+              <Input
+                id="set-submit"
+                value={formSettings.submitLabel}
+                maxLength={80}
+                onChange={(e) => setFormSettings({ ...formSettings, submitLabel: e.target.value })}
+                className="h-11 rounded-lg bg-background/45"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="set-term">Termo de aceite (LGPD)</Label>
+              <textarea
+                id="set-term"
+                value={formSettings.term}
+                maxLength={5000}
+                onChange={(e) => setFormSettings({ ...formSettings, term: e.target.value })}
+                rows={8}
+                className="rounded-lg border border-border bg-background/45 p-3 text-sm leading-relaxed"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6 grid gap-4 rounded-lg border border-border bg-muted/15 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Opções de Sexo</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setFormSettings((s) => ({ ...s, sexoOptions: [...s.sexoOptions, "Nova opção"] }))}
+              >
+                <Plus className="size-4" /> Opção
+              </Button>
+            </div>
+            <div className="grid gap-2">
+              {formSettings.sexoOptions.map((opt, i) => (
+                <div key={i} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <Input
+                    value={opt}
+                    maxLength={80}
+                    onChange={(e) => {
+                      const next = [...formSettings.sexoOptions];
+                      next[i] = e.target.value;
+                      setFormSettings({ ...formSettings, sexoOptions: next });
+                    }}
+                    className="h-11 rounded-lg bg-background/45"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={formSettings.sexoOptions.length <= 1}
+                    onClick={() =>
+                      setFormSettings((s) => ({
+                        ...s,
+                        sexoOptions: s.sexoOptions.filter((_, idx) => idx !== i),
+                      }))
+                    }
+                    aria-label="Remover opção"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6 grid gap-4 rounded-lg border border-border bg-muted/15 p-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="set-emp-sim">Rótulo "Está empregado" — SIM</Label>
+              <Input
+                id="set-emp-sim"
+                value={formSettings.empregadoSimLabel}
+                maxLength={40}
+                onChange={(e) => setFormSettings({ ...formSettings, empregadoSimLabel: e.target.value })}
+                className="h-11 rounded-lg bg-background/45"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="set-emp-nao">Rótulo "Está empregado" — NÃO</Label>
+              <Input
+                id="set-emp-nao"
+                value={formSettings.empregadoNaoLabel}
+                maxLength={40}
+                onChange={(e) => setFormSettings({ ...formSettings, empregadoNaoLabel: e.target.value })}
+                className="h-11 rounded-lg bg-background/45"
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">Grupos de interesse</h3>
           <div className="grid gap-5">
             {interestGroups.map((group, groupIndex) => (
               <div key={`${groupIndex}-${group.group}`} className="rounded-lg border border-border bg-muted/15 p-4">
@@ -506,7 +645,7 @@ function Dashboard() {
                           setInterestGroups(next);
                         }}
                         className="h-11 rounded-lg bg-background/45"
-                        aria-label="Opcao de interesse"
+                        aria-label="Opção de interesse"
                       />
                       <Button
                         type="button"
@@ -521,7 +660,7 @@ function Dashboard() {
                           };
                           setInterestGroups(next);
                         }}
-                        aria-label="Remover opcao"
+                        aria-label="Remover opção"
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -535,18 +674,28 @@ function Dashboard() {
                   className="mt-3"
                   onClick={() => {
                     const next = [...interestGroups];
-                    next[groupIndex] = { ...next[groupIndex], items: [...next[groupIndex].items, "Nova opcao"] };
+                    next[groupIndex] = { ...next[groupIndex], items: [...next[groupIndex].items, "Nova opção"] };
                     setInterestGroups(next);
                   }}
                 >
                   <Plus className="size-4" />
-                  Adicionar opcao
+                  Adicionar opção
                 </Button>
               </div>
             ))}
           </div>
 
-          {formMessage && <p className="mt-4 text-sm text-muted-foreground">{formMessage}</p>}
+          {formMessage && (
+            <p
+              className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+                formMessage.kind === "error"
+                  ? "border-destructive/40 bg-destructive/10 text-destructive-foreground"
+                  : "border-primary/40 bg-primary/10 text-primary-foreground"
+              }`}
+            >
+              {formMessage.text}
+            </p>
+          )}
         </section>
       ) : loading ? (
         <p className="text-muted-foreground">Carregando...</p>
