@@ -141,9 +141,9 @@ export const adminSaveInterestOptions = createServerFn({ method: "POST" })
       })),
     );
 
-    const normalizedLabels = rows.map((row) => row.label.toLocaleLowerCase("pt-BR"));
-    if (new Set(normalizedLabels).size !== normalizedLabels.length) {
-      throw new Error("Nao use opcoes de interesse com o mesmo nome.");
+    const dupKeys = rows.map((row) => `${row.group_label.toLocaleLowerCase("pt-BR")}::${row.label.toLocaleLowerCase("pt-BR")}`);
+    if (new Set(dupKeys).size !== dupKeys.length) {
+      throw new Error("Há opções duplicadas dentro do mesmo grupo.");
     }
 
     const { error: deleteError } = await supabaseAdmin
