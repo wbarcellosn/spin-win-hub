@@ -60,15 +60,17 @@ function maskPhone(value: string) {
 export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: string) => void; onBack?: () => void }) {
   const submit = useServerFn(submitForm);
   const loadInterests = useServerFn(getInterestOptions);
+  const loadSettings = useServerFn(getFormSettings);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [interestGroups, setInterestGroups] = useState<InterestGroup[]>(DEFAULT_INTEREST_GROUPS);
+  const [settings, setSettings] = useState<FormSettings>(DEFAULT_FORM_SETTINGS);
   const [form, setForm] = useState({
     nome: "",
     telefone: "",
     email: "",
     cpf: "",
-    sexo: "" as "" | "Masculino" | "Feminino" | "Prefiro não informar",
+    sexo: "" as string,
     empregado: null as null | boolean,
     empresa: "",
     interesses: [] as string[],
@@ -83,7 +85,10 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
         }
       })
       .catch(() => setInterestGroups(DEFAULT_INTEREST_GROUPS));
-  }, [loadInterests]);
+    loadSettings()
+      .then((s) => setSettings(s as FormSettings))
+      .catch(() => setSettings(DEFAULT_FORM_SETTINGS));
+  }, [loadInterests, loadSettings]);
 
   function toggleInterest(item: string) {
     setForm((f) => ({
