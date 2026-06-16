@@ -181,7 +181,7 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                   <Input id="cpf" inputMode="numeric" autoComplete="off" placeholder="000.000.000-00" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: maskCPF(e.target.value) })} className="h-11 rounded-lg bg-background/45" />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Sexo *</Label>
+                  <Label>Gênero *</Label>
                   <RadioGroup value={form.sexo} onValueChange={(v) => setForm({ ...form, sexo: v })} className="grid gap-2 pt-1 sm:grid-cols-2">
                     {settings.sexoOptions.map((s) => (
                       <label key={s} className="flex min-h-10 items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 text-sm">
