@@ -184,13 +184,16 @@ function Dashboard() {
   const resetFn = useServerFn(adminResetSpin);
   const saveWheelFn = useServerFn(adminSaveWheelPrizes);
   const saveInterestFn = useServerFn(adminSaveInterestOptions);
+  const loadSettingsFn = useServerFn(adminGetFormSettings);
+  const saveSettingsFn = useServerFn(adminSaveFormSettings);
   const [rows, setRows] = useState<EntryRow[]>([]);
   const [tab, setTab] = useState<"all" | "vr" | "wheel" | "form">("all");
   const [query, setQuery] = useState("");
   const [wheelLabels, setWheelLabels] = useState<string[]>([]);
   const [wheelMessage, setWheelMessage] = useState<string | null>(null);
   const [interestGroups, setInterestGroups] = useState<InterestGroup[]>(DEFAULT_INTEREST_GROUPS);
-  const [formMessage, setFormMessage] = useState<string | null>(null);
+  const [formSettings, setFormSettings] = useState<FormSettings>(DEFAULT_FORM_SETTINGS);
+  const [formMessage, setFormMessage] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -210,10 +213,16 @@ function Dashboard() {
     setInterestGroups(data as InterestGroup[]);
   }
 
+  async function refreshFormSettings() {
+    const data = await loadSettingsFn();
+    setFormSettings(data as FormSettings);
+  }
+
   useEffect(() => {
     void refresh();
     void refreshWheel();
     void refreshInterestOptions();
+    void refreshFormSettings();
   }, []); // eslint-disable-line
 
   const vrRows = rows.filter((r) => isVrPrize(r.premio));
