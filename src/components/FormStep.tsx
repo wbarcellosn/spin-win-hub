@@ -203,10 +203,10 @@ export default function FormStep({ onSubmitted, onBack }: { onSubmitted: (id: st
                   <Label>Está empregado(a) no momento? *</Label>
                   <RadioGroup value={form.empregado === null ? "" : form.empregado ? "sim" : "nao"} onValueChange={(v) => setForm({ ...form, empregado: v === "sim" })} className="grid grid-cols-2 gap-3 sm:max-w-xs">
                     <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 text-sm">
-                      <RadioGroupItem value="sim" /> Sim
+                      <RadioGroupItem value="sim" /> {settings.empregadoSimLabel}
                     </label>
                     <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 text-sm">
-                      <RadioGroupItem value="nao" /> Não
+                      <RadioGroupItem value="nao" /> {settings.empregadoNaoLabel}
                     </label>
                   </RadioGroup>
                   {form.empregado && (
