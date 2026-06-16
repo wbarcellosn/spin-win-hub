@@ -3,39 +3,20 @@ import { useServerFn } from "@tanstack/react-start";
 import { BriefcaseBusiness, CheckCircle2, IdCard, Mail, Phone, ShieldCheck, User } from "lucide-react";
 import { z } from "zod";
 import logoUrl from "@/assets/logo.png";
-import { getInterestOptions, submitForm } from "@/lib/wheel.functions";
-import { DEFAULT_INTEREST_GROUPS, type InterestGroup } from "@/lib/form-options";
+import { getFormSettings, getInterestOptions, submitForm } from "@/lib/wheel.functions";
+import { DEFAULT_FORM_SETTINGS, DEFAULT_INTEREST_GROUPS, type FormSettings, type InterestGroup } from "@/lib/form-options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const TERM = `Declaro que concordo com a utilização dos dados pessoais por parte do IEL-ES para fins de avaliação de perfil profissional, participação em processos seletivos, divulgação de oportunidades profissionais, cursos, programas, eventos e demais iniciativas institucionais, bem como para a realização de pesquisas e levantamentos de interesse institucional.
-
-Os dados pessoais informados serão tratados com segurança, confidencialidade e em conformidade com a Lei Geral de Proteção de Dados Pessoais - LGPD (Lei nº 13.709/2018), observando-se os princípios da finalidade, adequação, necessidade e proteção dos direitos dos titulares dos dados.`;
-
-const INTERESSES_GROUPS: Array<{ group: string; items: string[] }> = [
-  {
-    group: "Estágios e carreira",
-    items: [
-      "Sou empresa, quero contratar estagiário e/ou CLT",
-      "Oportunidade de emprego/estágio",
-      "Gestão de estágio",
-    ],
-  },
-  {
-    group: "Academia Findes de Negócios",
-    items: ["Cursos e eventos da Academia Findes de Negócios", "Fórum IEL de Gestão 2026"],
-  },
-];
-
 const schema = z.object({
   nome: z.string().trim().min(1, "Informe seu nome").max(200),
   telefone: z.string().trim().min(8, "Telefone inválido").max(40),
   email: z.string().trim().email("E-mail inválido").max(255),
   cpf: z.string().trim().refine(isValidCpf, "CPF inválido"),
-  sexo: z.enum(["Masculino", "Feminino", "Prefiro não informar"]),
+  sexo: z.string().trim().min(1, "Selecione uma opção"),
   empregado: z.boolean(),
   empresa: z.string().trim().max(200).optional(),
   interesses: z.array(z.string()).min(1, "Selecione ao menos um interesse"),
