@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { DEFAULT_INTEREST_GROUPS } from "@/lib/form-options";
+import { DEFAULT_FORM_SETTINGS, DEFAULT_INTEREST_GROUPS, type FormSettings } from "@/lib/form-options";
 import { z } from "zod";
 
 async function assertAdmin(userId: string) {
