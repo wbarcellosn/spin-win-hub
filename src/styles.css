@@ -118,8 +118,47 @@
 .btn-stop:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media print {
+  html,
+  body,
+  .dashboard-print,
+  .dashboard-print * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: oklch(0.14 0.04 265) !important;
+    color: var(--color-foreground) !important;
+  }
+
   .dashboard-print {
     max-width: none !important;
+    min-height: auto !important;
     padding: 0 !important;
+    background: radial-gradient(ellipse at top, oklch(0.25 0.07 265) 0%, oklch(0.14 0.04 265) 70%) !important;
+    color: var(--color-foreground) !important;
+  }
+
+  .dashboard-print section {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 8px 22px oklch(0 0 0 / 0.18) !important;
+    break-inside: avoid;
+  }
+
+  .dashboard-print [class*="bg-muted"] {
+    background: var(--muted) !important;
+  }
+
+  .dashboard-print [class*="bg-primary"] {
+    background: var(--primary) !important;
+  }
+
+  .dashboard-print [class*="text-muted-foreground"] {
+    color: var(--muted-foreground) !important;
   }
 }
