@@ -232,6 +232,13 @@ function DashboardPage() {
             <RefreshCw className="size-4" />
             Atualizar
           </Button>
+          <Button
+            variant="ghost"
+            className="col-span-2 h-10 sm:col-span-1"
+            onClick={() => supabase.auth.signOut()}
+          >
+            Sair
+          </Button>
         </div>
       </header>
 
