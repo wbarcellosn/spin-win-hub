@@ -116,3 +116,27 @@
 }
 .btn-stop:hover { box-shadow: 0 0 45px oklch(0.5 0.2 25 / 0.7); }
 .btn-stop:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .dashboard-print {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .dashboard-print section,
+  .dashboard-print [class*="bg-card"] {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border-color: #d4d4d4 !important;
+  }
+
+  .dashboard-print [class*="text-muted-foreground"] {
+    color: #555 !important;
+  }
+}

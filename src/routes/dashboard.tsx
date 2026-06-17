@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,10 +48,21 @@ function StatCard({ title, value, detail }: { title: string; value: string | num
   );
 }
 
-function DistributionCard({ title, items, empty = "Sem dados" }: { title: string; items: Bucket[]; empty?: string }) {
+function DistributionCard({
+  title,
+  items,
+  empty = "Sem dados",
+  description,
+}: {
+  title: string;
+  items: Bucket[];
+  empty?: string;
+  description?: string;
+}) {
   return (
     <section className="rounded-lg border border-border bg-card p-4 shadow-lg sm:p-5">
       <h2 className="text-base font-bold sm:text-lg">{title}</h2>
+      {description && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{description}</p>}
       <div className="mt-4 grid gap-3">
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">{empty}</p>
@@ -212,7 +223,7 @@ function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen w-full max-w-7xl px-3 py-5 sm:px-4 sm:py-8 lg:mx-auto">
+    <main className="dashboard-print min-h-screen w-full max-w-7xl px-3 py-5 sm:px-4 sm:py-8 lg:mx-auto">
       <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <img src={logoUrl} alt="Findes IEL" className="h-10 shrink-0 sm:h-12" />
@@ -221,7 +232,7 @@ function DashboardPage() {
             <p className="mt-1 text-sm text-muted-foreground">Resumo dos participantes e resultados da roleta</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end print:hidden">
           <a href="/admin">
             <Button variant="outline" className="h-10 w-full sm:w-auto">
               <ArrowLeft className="size-4" />
@@ -231,6 +242,10 @@ function DashboardPage() {
           <Button className="h-10" onClick={() => void refreshStats()} disabled={loadingStats}>
             <RefreshCw className="size-4" />
             Atualizar
+          </Button>
+          <Button variant="outline" className="h-10" onClick={() => window.print()}>
+            <Printer className="size-4" />
+            Imprimir PDF
           </Button>
           <Button
             variant="ghost"
@@ -254,28 +269,17 @@ function DashboardPage() {
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard title="Total de participantes" value={stats.totalParticipants} />
-            <StatCard
-              title="SESI, SENAI ou FINDES"
-              value={stats.organizations.total}
-              detail={`${formatPercent(stats.organizations.percent)} do total`}
-            />
-            <StatCard
-              title="Pessoas empregadas"
-              value={stats.employment.find((item) => item.label === "Empregadas")?.count ?? 0}
-              detail={formatPercent(stats.employment.find((item) => item.label === "Empregadas")?.percent ?? 0)}
-            />
-            <StatCard
-              title="Pessoas desempregadas"
-              value={stats.employment.find((item) => item.label === "Desempregadas")?.count ?? 0}
-              detail={formatPercent(stats.employment.find((item) => item.label === "Desempregadas")?.percent ?? 0)}
-            />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <DistributionCard title="Genero" items={stats.genders} />
             <DistributionCard title="Empregadas x desempregadas" items={stats.employment} />
             <DistributionCard title="Premios e resultados" items={stats.prizes} />
-            <DistributionCard title="SESI, SENAI e FINDES" items={stats.organizations.items} />
+            <DistributionCard
+              title="SESI, SENAI e FINDES"
+              items={stats.organizations.items}
+              description="Foram consideradas pessoas que possuiam @sesi, @senai ou @findes no e-mail, ou que informaram estar empregadas e citaram SESI, SENAI ou FINDES como empresa empregadora."
+            />
           </div>
 
           <DistributionCard title="Interesses marcados" items={stats.interests} />
