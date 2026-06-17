@@ -214,6 +214,115 @@ export const bootstrapAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+type DashboardBucket = {
+  label: string;
+  count: number;
+  percent: number;
+};
+
+type DashboardEntry = {
+  sexo: string | null;
+  empregado: boolean | null;
+  empresa: string | null;
+  email: string | null;
+  premio: string | null;
+  interesses: string[] | null;
+};
+
+function normalizeMetricText(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+}
+
+function pct(count: number, total: number) {
+  if (total === 0) return 0;
+  return Math.round((count / total) * 1000) / 10;
+}
+
+function bucketFromMap(map: Map<string, number>, total: number) {
+  return Array.from(map.entries())
+    .map(([label, count]) => ({ label, count, percent: pct(count, total) }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "pt-BR"));
+}
+
+export const adminGetDashboardStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data, error } = await supabaseAdmin
+      .from("entries")
+      .select("sexo, empregado, empresa, email, premio, interesses");
+    if (error) throw new Error(error.message);
+
+    const rows = (data ?? []) as DashboardEntry[];
+    const totalParticipants = rows.length;
+    const genderMap = new Map<string, number>();
+    const employmentMap = new Map<string, number>();
+    const prizeMap = new Map<string, number>();
+    const interestMap = new Map<string, number>();
+    const orgMap = new Map<string, number>([
+      ["SESI", 0],
+      ["SENAI", 0],
+      ["FINDES", 0],
+    ]);
+    let orgTotal = 0;
+
+    const { data: interestRows } = await supabaseAdmin
+      .from("form_interest_options")
+      .select("label, position")
+      .order("position", { ascending: true });
+    const knownInterestLabels = (interestRows?.length
+      ? interestRows.map((item) => item.label)
+      : DEFAULT_INTEREST_GROUPS.flatMap((group) => group.items)
+    ).filter(Boolean);
+    for (const label of knownInterestLabels) interestMap.set(label, 0);
+
+    for (const row of rows) {
+      const gender = row.sexo?.trim() || "Não informado";
+      genderMap.set(gender, (genderMap.get(gender) ?? 0) + 1);
+
+      const employment = row.empregado ? "Empregadas" : "Desempregadas";
+      employmentMap.set(employment, (employmentMap.get(employment) ?? 0) + 1);
+
+      const prize = row.premio?.trim() || "Ainda não girou";
+      prizeMap.set(prize, (prizeMap.get(prize) ?? 0) + 1);
+
+      const selectedInterests = new Set(Array.isArray(row.interesses) ? row.interesses : []);
+      for (const label of selectedInterests) {
+        interestMap.set(label, (interestMap.get(label) ?? 0) + 1);
+      }
+
+      const company = normalizeMetricText(row.empresa);
+      const email = (row.email ?? "").toLowerCase();
+      let matchedOrg = false;
+      for (const org of ["SESI", "SENAI", "FINDES"]) {
+        const match = company.includes(org) || email.includes(`@${org.toLowerCase()}`);
+        if (match) {
+          orgMap.set(org, (orgMap.get(org) ?? 0) + 1);
+          matchedOrg = true;
+        }
+      }
+      if (matchedOrg) orgTotal += 1;
+    }
+
+    return {
+      totalParticipants,
+      genders: bucketFromMap(genderMap, totalParticipants),
+      employment: bucketFromMap(employmentMap, totalParticipants),
+      prizes: bucketFromMap(prizeMap, totalParticipants),
+      interests: bucketFromMap(interestMap, totalParticipants),
+      organizations: {
+        total: orgTotal,
+        percent: pct(orgTotal, totalParticipants),
+        items: bucketFromMap(orgMap, totalParticipants),
+      },
+    };
+  });
+
 const formSettingsSchema = z.object({
   title: z.string().trim().min(1).max(200),
   subtitle: z.string().trim().max(500),
@@ -255,4 +364,3 @@ export const adminSaveFormSettings = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-

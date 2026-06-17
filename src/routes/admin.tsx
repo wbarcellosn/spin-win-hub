@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Save, Search, Trash2 } from "lucide-react";
+import { BarChart3, Plus, Save, Search, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -306,6 +306,12 @@ function Dashboard() {
           <h1 className="min-w-0 text-xl font-bold leading-tight sm:text-2xl">Painel do Gestor</h1>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+          <a href="/dashboard" className="contents sm:block">
+            <Button variant="outline" className="h-10 w-full">
+              <BarChart3 className="size-4" />
+              Dashboard
+            </Button>
+          </a>
           <Button variant="outline" className="h-10" onClick={() => void refresh()}>Atualizar</Button>
           <Button onClick={downloadReportCsv} className="h-10 btn-spin">Baixar CSV</Button>
           <Button variant="ghost" className="col-span-2 h-10 sm:col-span-1" onClick={() => supabase.auth.signOut()}>Sair</Button>
