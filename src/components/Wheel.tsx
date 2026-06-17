@@ -94,6 +94,8 @@ export default function Wheel({ prizes, spinning, targetIndex, onSpinComplete }:
             const d = `M 0 0 L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
             const textX = Math.cos(mid) * 64;
             const textY = Math.sin(mid) * 64;
+            const indexX = Math.cos(mid) * 86;
+            const indexY = Math.sin(mid) * 86;
             const rawRotation = (mid * 180) / Math.PI + 90;
             const textRotation = rawRotation > 90 && rawRotation < 270 ? rawRotation + 180 : rawRotation;
             const lines = splitPrize(label);
@@ -123,6 +125,19 @@ export default function Wheel({ prizes, spinning, targetIndex, onSpinComplete }:
                         {line}
                       </tspan>
                     ))}
+                  </text>
+                </g>
+                <g transform={`translate(${indexX} ${indexY}) rotate(${textRotation})`}>
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill="white"
+                    fontSize="4"
+                    fontWeight="800"
+                    opacity="0.38"
+                    style={{ letterSpacing: 0 }}
+                  >
+                    {i + 1}
                   </text>
                 </g>
               </g>

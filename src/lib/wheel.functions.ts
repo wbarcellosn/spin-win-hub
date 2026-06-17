@@ -26,7 +26,7 @@ export const getFormSettings = createServerFn({ method: "GET" }).handler(async (
   } satisfies FormSettings;
 });
 
-const DEFAULT_PRIZES = [
+const INITIAL_PRIZE_SEED = [
   "NÃO FOI DESSA VEZ",
   "GANHOU BRINDE",
   "NÃO FOI DESSA VEZ",
@@ -89,7 +89,7 @@ async function ensureWheelPrizes() {
 
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from("wheel_prizes")
-    .insert(DEFAULT_PRIZES.map((label, position) => ({ label, position })))
+    .insert(INITIAL_PRIZE_SEED.map((label, position) => ({ label, position })))
     .select("id, label, position")
     .order("position", { ascending: true });
   if (insertError) throw new Error(insertError.message);

@@ -359,7 +359,7 @@ function Dashboard() {
             <div>
               <h2 className="text-lg font-bold">Pás da roleta</h2>
               <p className="text-sm text-muted-foreground">
-                O sorteio é uniforme entre todos os itens cadastrados abaixo.
+                O sorteio usa as pas salvas no banco. Cada pa cadastrada tem uma chance igual.
               </p>
             </div>
             <div className="flex gap-2">
@@ -394,7 +394,7 @@ function Dashboard() {
 
           <div className="grid gap-3">
             {wheelLabels.map((label, index) => (
-              <div key={`${index}-${label}`} className="grid gap-3 rounded-lg border border-border bg-muted/15 p-3 sm:grid-cols-[190px_1fr_auto] sm:items-center">
+              <div key={`wheel-label-${index}`} className="grid gap-3 rounded-lg border border-border bg-muted/15 p-3 sm:grid-cols-[190px_1fr_auto] sm:items-center">
                 <div className="flex items-center gap-3">
                   <span
                     className="h-11 w-11 shrink-0 rounded-full border border-white/20 shadow-inner"

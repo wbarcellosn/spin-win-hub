@@ -69,8 +69,8 @@ export default function WheelStep({ entryId, initialPrize, onResult }: Props) {
           PARAR
         </button>
       </div>
-      <p className="mt-4 max-w-xs text-center text-xs text-muted-foreground sm:max-w-sm">
-        Clique em GIRAR para iniciar a roleta. Após alguns segundos, clique em PARAR para revelar seu prêmio.
+      <p className="mt-4 max-w-xs text-center text-xs leading-relaxed text-muted-foreground sm:max-w-sm">
+        Você tem direito a um único giro. Clique em GIRAR para iniciar a roleta e, após alguns segundos, clique em PARAR para revelar seu prêmio. Boa sorte!
       </p>
     </main>
   );
