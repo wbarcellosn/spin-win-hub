@@ -299,21 +299,21 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen px-3 py-5 sm:px-4 sm:py-8 max-w-7xl mx-auto">
+    <div className="min-h-screen w-full max-w-7xl px-3 py-5 sm:px-4 sm:py-8 lg:mx-auto">
       <header className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <img src={logoUrl} alt="Logo" className="h-10 sm:h-12" />
-          <h1 className="text-xl font-bold sm:text-2xl">Painel do Gestor</h1>
+        <div className="flex min-w-0 items-center gap-3">
+          <img src={logoUrl} alt="Logo" className="h-10 shrink-0 sm:h-12" />
+          <h1 className="min-w-0 text-xl font-bold leading-tight sm:text-2xl">Painel do Gestor</h1>
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:flex">
-          <Button variant="outline" onClick={() => void refresh()}>Atualizar</Button>
-          <Button onClick={downloadReportCsv} className="btn-spin">Baixar CSV</Button>
-          <Button variant="ghost" onClick={() => supabase.auth.signOut()}>Sair</Button>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+          <Button variant="outline" className="h-10" onClick={() => void refresh()}>Atualizar</Button>
+          <Button onClick={downloadReportCsv} className="h-10 btn-spin">Baixar CSV</Button>
+          <Button variant="ghost" className="col-span-2 h-10 sm:col-span-1" onClick={() => supabase.auth.signOut()}>Sair</Button>
         </div>
       </header>
 
       <div className="mb-4 grid gap-3 lg:grid-cols-[auto_1fr] lg:items-center">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
           <button
             className={`shrink-0 px-4 py-2 rounded-md text-sm font-medium ${tab === "all" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
             onClick={() => setTab("all")}
@@ -726,69 +726,143 @@ function Dashboard() {
       ) : loading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
-        <div className="overflow-auto rounded-lg border border-border bg-card">
-          <table className="min-w-[980px] w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="p-2">Senha</th>
-                <th className="p-2">Nome</th>
-                <th className="p-2">CPF</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Telefone</th>
-                <th className="p-2">Prêmio</th>
-                <th className="p-2">Girou</th>
-                <th className="p-2">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.map((r) => (
-                <tr key={r.id} className="border-t border-border">
-                  <td className="p-2 font-mono">{r.senha}</td>
-                  <td className="p-2">{r.nome}</td>
-                  <td className="p-2 font-mono text-xs">{formatCpf(r.cpf)}</td>
-                  <td className="p-2">{r.email}</td>
-                  <td className="p-2">{r.telefone}</td>
-                  <td className="p-2 text-xs">{r.premio ?? "-"}</td>
-                  <td className="p-2">{r.spun ? "Sim" : "Não"}</td>
-                  <td className="p-2">
-                    {tab === "vr" ? (
-                      <Button
-                        size="sm"
-                        variant={r.vr_used ? "ghost" : "default"}
-                        onClick={async () => {
-                          await markFn({ data: { id: r.id, used: !r.vr_used } });
+        <>
+          <div className="grid gap-3 md:hidden">
+            {filteredRows.map((r) => (
+              <article key={r.id} className="rounded-lg border border-border bg-card p-4 shadow-lg">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-bold">{r.nome}</p>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">CPF {formatCpf(r.cpf)}</p>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-muted px-2 py-1 font-mono text-xs font-bold">
+                    {r.senha}
+                  </span>
+                </div>
+
+                <dl className="grid gap-2 text-sm">
+                  <div className="grid gap-1">
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">E-mail</dt>
+                    <dd className="break-words">{r.email}</dd>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-muted-foreground">Telefone</dt>
+                      <dd>{r.telefone}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-muted-foreground">Girou</dt>
+                      <dd>{r.spun ? "Sim" : "Não"}</dd>
+                    </div>
+                  </div>
+                  <div className="grid gap-1">
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">Prêmio</dt>
+                    <dd className="break-words">{r.premio ?? "-"}</dd>
+                  </div>
+                </dl>
+
+                <div className="mt-4">
+                  {tab === "vr" ? (
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      variant={r.vr_used ? "ghost" : "default"}
+                      onClick={async () => {
+                        await markFn({ data: { id: r.id, used: !r.vr_used } });
+                        await refresh();
+                      }}
+                    >
+                      {r.vr_used ? "Utilizada" : "Não utilizada"}
+                    </Button>
+                  ) : r.spun ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={async () => {
+                        if (confirm("Liberar nova rodada para este usuário?")) {
+                          await resetFn({ data: { id: r.id } });
                           await refresh();
-                        }}
-                      >
-                        {r.vr_used ? "Utilizada" : "Não utilizada"}
-                      </Button>
-                    ) : r.spun ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          if (confirm("Liberar nova rodada para este usuário?")) {
-                            await resetFn({ data: { id: r.id } });
-                            await refresh();
-                          }
-                        }}
-                      >
-                        Liberar giro
-                      </Button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-              {filteredRows.length === 0 && (
+                        }
+                      }}
+                    >
+                      Liberar giro
+                    </Button>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+            {filteredRows.length === 0 && (
+              <div className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                Nenhum registro encontrado.
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-auto rounded-lg border border-border bg-card md:block">
+            <table className="min-w-[980px] w-full text-sm">
+              <thead className="bg-muted/50 text-left">
                 <tr>
-                  <td className="p-6 text-center text-muted-foreground" colSpan={8}>
-                    Nenhum registro encontrado.
-                  </td>
+                  <th className="p-2">Senha</th>
+                  <th className="p-2">Nome</th>
+                  <th className="p-2">CPF</th>
+                  <th className="p-2">Email</th>
+                  <th className="p-2">Telefone</th>
+                  <th className="p-2">Prêmio</th>
+                  <th className="p-2">Girou</th>
+                  <th className="p-2">Ações</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredRows.map((r) => (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="p-2 font-mono">{r.senha}</td>
+                    <td className="p-2">{r.nome}</td>
+                    <td className="p-2 font-mono text-xs">{formatCpf(r.cpf)}</td>
+                    <td className="p-2">{r.email}</td>
+                    <td className="p-2">{r.telefone}</td>
+                    <td className="p-2 text-xs">{r.premio ?? "-"}</td>
+                    <td className="p-2">{r.spun ? "Sim" : "Não"}</td>
+                    <td className="p-2">
+                      {tab === "vr" ? (
+                        <Button
+                          size="sm"
+                          variant={r.vr_used ? "ghost" : "default"}
+                          onClick={async () => {
+                            await markFn({ data: { id: r.id, used: !r.vr_used } });
+                            await refresh();
+                          }}
+                        >
+                          {r.vr_used ? "Utilizada" : "Não utilizada"}
+                        </Button>
+                      ) : r.spun ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            if (confirm("Liberar nova rodada para este usuário?")) {
+                              await resetFn({ data: { id: r.id } });
+                              await refresh();
+                            }
+                          }}
+                        >
+                          Liberar giro
+                        </Button>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+                {filteredRows.length === 0 && (
+                  <tr>
+                    <td className="p-6 text-center text-muted-foreground" colSpan={8}>
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
