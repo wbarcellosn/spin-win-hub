@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { adminGetDashboardStats, adminIsAdmin } from "@/lib/admin.functions";
 import logoUrl from "@/assets/logo.png";
@@ -72,6 +75,62 @@ function DistributionCard({ title, items, empty = "Sem dados" }: { title: string
         )}
       </div>
     </section>
+  );
+}
+
+function DashboardLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setError(error.message);
+    setLoading(false);
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center px-4">
+      <img src={logoUrl} alt="Findes IEL" className="mb-6 h-14" />
+      <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6 shadow-xl">
+        <div className="text-center">
+          <h1 className="text-xl font-bold">Dashboard</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Entre com seu login de administrador para visualizar os indicadores.
+          </p>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="dashboard-email">E-mail</Label>
+          <Input
+            id="dashboard-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="dashboard-password">Senha</Label>
+          <Input
+            id="dashboard-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <Button type="submit" disabled={loading} className="w-full btn-spin">
+          {loading ? "Entrando..." : "Entrar"}
+        </Button>
+      </form>
+    </main>
   );
 }
 
@@ -146,7 +205,7 @@ function DashboardPage() {
     return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Carregando...</div>;
   }
   if (!session) {
-    return <Gate title="Login necessario" text="Entre como administrador para visualizar o dashboard." />;
+    return <DashboardLogin />;
   }
   if (!isAdmin) {
     return <Gate title="Acesso negado" text="Sua conta nao tem permissao para visualizar este dashboard." />;
